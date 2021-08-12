@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Azure.WebJobs.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,6 +23,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
         /// </summary>
         public ServiceBusOptions()
         {
+            DynamicallyScaleSessionCallConcurrency = false;
         }
 
         /// <summary>
@@ -140,6 +142,15 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
         public TimeSpan? SessionIdleTimeout { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether per session concurrency can be dynamically managed when
+        /// <see cref="ConcurrencyOptions.DynamicConcurrencyEnabled"/> is true. By default, per session concurrency
+        /// is limited to 1 to ensure per session ordering guarantees are maintained. Setting this to true will
+        /// allow <see cref="ConcurrencyManager"/> to dynamically increase/decrease overall call concurrency across sessions.
+        /// The default is false.
+        /// </summary>
+        public bool DynamicallyScaleSessionCallConcurrency { get; set; }
+
+        /// <summary>
         /// Gets or sets the JSON serialization settings to use when binding to POCOs.
         /// </summary>
 #pragma warning disable AZC0014 // Avoid using banned types in public API
@@ -166,7 +177,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
                 { nameof(ServiceBusClientOptions.RetryOptions.TryTimeout), ClientRetryOptions.TryTimeout },
                 { nameof(ServiceBusClientOptions.RetryOptions.Delay), ClientRetryOptions.Delay },
                 { nameof(ServiceBusClientOptions.RetryOptions.MaxDelay), ClientRetryOptions.MaxDelay },
-                { nameof(ServiceBusClientOptions.RetryOptions.MaxRetries), ClientRetryOptions.MaxRetries },
+                { nameof(ServiceBusClientOptions.RetryOptions.MaxRetries), ClientRetryOptions.MaxRetries }
             };
 
             JObject options = new JObject
@@ -180,7 +191,8 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
                 { nameof(MaxConcurrentCalls), MaxConcurrentCalls },
                 { nameof(MaxConcurrentSessions), MaxConcurrentSessions },
                 { nameof(MaxMessageBatchSize), MaxMessageBatchSize },
-                { nameof(SessionIdleTimeout), SessionIdleTimeout.ToString() ?? string.Empty }
+                { nameof(SessionIdleTimeout), SessionIdleTimeout.ToString() ?? string.Empty },
+                { nameof(DynamicallyScaleSessionCallConcurrency), DynamicallyScaleSessionCallConcurrency }
             };
 
             return options.ToString(Formatting.Indented);
